@@ -21,7 +21,7 @@ fmod POLYNOMIAL is
   eq P1 p- P2 = P1 p+ neg(P2) .
   eq P1 p+ neg(P1) = 0 . 
   eq neg(neg(P1)) = P1 .
-  eq P1 p+ neg(P1 p+ P2) = neg(P2) .
+  eq neg(P1 p+ P2) = neg(P1) p+ neg(P2) .
 endfm
 
 view Poly from TRIV to POLYNOMIAL is
