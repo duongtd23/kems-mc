@@ -216,7 +216,7 @@ fmod CONFIG is
   eq isSmall?(s3) = true .
   eq isSmall?(s4) = true .
 
-  eq init = {(nw: empty) (prins: (alice ; bob))
+  eq init = {(nw: empty) (prins: (alice ; bob ; eve))
     (rd-s: (s1 , s2 , s3 , s4))
     (key[alice]: nil) (key[bob]: nil) (keys: empty)
     (s[alice]: 0) (s[bob]: 0) 

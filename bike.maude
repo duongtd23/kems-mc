@@ -160,7 +160,7 @@ fmod CONFIG is
   ops ga gb ge : -> Poly .
   ops alice bob : -> Prin .
 
-  eq init = {(nw: empty) (prins: (alice bob))
+  eq init = {(nw: empty) (prins: (alice bob eve))
     (rhs: (po1, po2, po3, po4)) (rms: (po5, po6)) 
     (key[alice]: nil) (key[bob]: nil) (keys: empty)
     (h0[alice]: 0) (h0[bob]: 0) (h0s: empty) (h1s: empty) 
