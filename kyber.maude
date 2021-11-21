@@ -8,10 +8,10 @@ fmod POLYNOMIAL is
   sort Poly .
   subsort Int < Poly .
 
-  op _p+_ : Poly Poly -> Poly [assoc comm prec 33] .
-  op _p*_ : Poly Poly -> Poly [assoc comm prec 31] .
+  op _p+_ : Poly Poly -> Poly [ctor assoc comm prec 33] .
+  op _p*_ : Poly Poly -> Poly [ctor assoc comm prec 31] .
   op _p-_ : Poly Poly -> Poly [prec 33] .
-  op neg_ : Poly -> Poly .
+  op neg_ : Poly -> Poly [ctor] .
 
   vars P0 P1 P2 P3 : Poly .
   eq P1 p+ 0 = P1 .
@@ -259,7 +259,7 @@ fmod CONFIG is
   ops d1 d2 m1 m2 : -> Poly .
   ops alice bob : -> Prin .
 
-  eq init = {(nw: empty) (prins: (alice bob))
+  eq init = {(nw: empty) (prins: (alice bob eve))
     (rd-d: (d1 , d2)) (rd-m: (m1 , m2)) 
     (keys[alice]: empty) (keys[bob]: empty) (glean-keys: empty)
     (d[alice]: 0) (d[bob]: 0) (m[alice]: 0) (m[bob]: 0)

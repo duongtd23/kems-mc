@@ -17,10 +17,10 @@ fmod POLYNOMIAL is
   sort Poly .
   subsort Frac < Poly .
 
-  op _p+_ : Poly Poly -> Poly [assoc comm prec 33 gather (E e)] . --- should not use id: 0
-  op _p*_ : Poly Poly -> Poly [assoc comm prec 31 gather (E e)] . --- should not use id: 1
-  op _p-_ : Poly Poly -> Poly [prec 33 gather (E e)] .
-  op _md_ : Poly Int -> Poly [prec 32] . --- polynomial mod p
+  op _p+_ : Poly Poly -> Poly [ctor assoc comm prec 33 gather (E e)] . --- should not use id: 0
+  op _p*_ : Poly Poly -> Poly [ctor assoc comm prec 31 gather (E e)] . --- should not use id: 1
+  op _p-_ : Poly Poly -> Poly [ctor prec 33 gather (E e)] .
+  op _md_ : Poly Int -> Poly [ctor prec 32] . --- polynomial mod p
   op round : Poly -> Poly .
   op equal : Poly Poly -> Bool .        --- approximately equal
 

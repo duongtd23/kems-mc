@@ -8,11 +8,11 @@ fmod POLYNOMIAL is
   sort Poly .
   subsort Int < Poly .
 
-  op _p+_ : Poly Poly -> Poly [assoc comm prec 33 gather (E e)] . --- should not use id: 0
-  op _p*_ : Poly Poly -> Poly [assoc comm prec 31 gather (E e)] . --- should not use id: 1
-  op _md_ : Poly Int -> Poly [prec 32] . --- polynomial mod p
+  op _p+_ : Poly Poly -> Poly [ctor assoc comm prec 33 gather (E e)] . --- should not use id: 0
+  op _p*_ : Poly Poly -> Poly [ctor assoc comm prec 31 gather (E e)] . --- should not use id: 1
+  op _md_ : Poly Int -> Poly [ctor prec 32] . --- polynomial mod p
   op _p-_ : Poly Poly -> Poly [prec 33 gather (E e)] .
-  op neg_ : Poly -> Poly .
+  op neg_ : Poly -> Poly [ctor] .
 
   vars P0 P1 P2 P3 : Poly .
   vars M N : Nat .
@@ -200,14 +200,11 @@ fmod COLLECTION{X :: TRIV} is
   op empty : -> Collection{X} [ctor] .
   op _;_ : Collection{X} Collection{X} -> Collection{X} [assoc comm id: empty ctor] .
   op _\in_ : X$Elt Collection{X} -> Bool .
-  --- op size : List{X} -> Nat .
 
   var E : X$Elt .
   var C : Collection{X} .
   eq E \in (E ; C) = true .
   eq E \in C = false [owise] .
-  --- eq size(empty) = 0 .
-  --- eq size(E:X$Elt L:List{X}) = 1 + size(L:List{X}) .
 endfm
 
 fmod SLIST{X :: TRIV} is
@@ -293,7 +290,7 @@ fmod CONFIG is
   ops seed1 seed2 r1 r2 m1 m2 : -> Poly .
   ops alice bob : -> Prin .
 
-  eq init = {(nw: empty) (prins: (alice ; bob))
+  eq init = {(nw: empty) (prins: (alice ; bob ; eve))
     (rd-seed: (seed1 , seed2)) (rd-r: (r1 , r2)) (rd-m: (m1 , m2)) 
     (key[alice]: nil) (key[bob]: nil) (keys: empty)
     (seed[alice]: 0) (seed[bob]: 0) (r[alice]: 0) (r[bob]: 0)

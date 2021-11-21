@@ -8,9 +8,9 @@ fmod POLYNOMIAL-B2 is
   sort Poly .
   subsort Int < Poly .
 
-  op _p+_ : Poly Poly -> Poly [assoc comm prec 33] .
-  op _p*_ : Poly Poly -> Poly [assoc comm prec 31] .
-  op invert : Poly -> Poly .
+  op _p+_ : Poly Poly -> Poly [ctor assoc comm prec 33] .
+  op _p*_ : Poly Poly -> Poly [ctor assoc comm prec 31] .
+  op invert : Poly -> Poly [ctor] .
 
   vars P1 P2 P3 : Poly .
   vars M N : Nat .
