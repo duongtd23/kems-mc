@@ -149,10 +149,10 @@ fmod MESSAGE is
   sort Msg .
 
 --- As+e, and Rho
-  op m1 : Prin Prin Prin Vector Poly MsgState -> Msg [ctor] .
+  op msg1 : Prin Prin Prin Vector Poly MsgState -> Msg [ctor] .
 
 --- pair(u,v)
-  op m2 : Prin Prin Prin Vector Poly MsgState -> Msg [ctor] .
+  op msg2 : Prin Prin Prin Vector Poly MsgState -> Msg [ctor] .
 endfm
 
 fmod KEY is 
@@ -219,7 +219,7 @@ fmod OCOMP is
 
 --- alice side
   op (d[_]:_) : Prin Poly -> OComp [ctor] .
-  
+
 --- bob side
   op (m[_]:_) : Prin Poly -> OComp [ctor] .
 
@@ -228,8 +228,6 @@ fmod OCOMP is
   op (rd-m:_) : ListPoly -> OComp [ctor] .
 
 --- eve 
-  op (glean-m1:_) : ColMsg -> OComp [ctor] .
-  op (glean-m2:_) : ColMsg -> OComp [ctor] . 
   op (ds:_) : ColPoly -> OComp [ctor] .
   op (ms:_) : ColPoly -> OComp [ctor] .
   op (glean-keys:_) : ColKey -> OComp [ctor] . --- key obtained by eve
@@ -263,7 +261,6 @@ fmod CONFIG is
     (rd-d: (d1 , d2)) (rd-m: (m1 , m2)) 
     (keys[alice]: empty) (keys[bob]: empty) (glean-keys: empty)
     (d[alice]: 0) (d[bob]: 0) (m[alice]: 0) (m[bob]: 0)
-    (glean-m1: empty) (glean-m2: empty)
     (ds: empty) (ms: empty)} .
 endfm
 
@@ -300,19 +297,19 @@ mod KYBER is
     (prins: (A B PS)) (nw: MS) OCs}
   => {(rd-d: PoL) (d[A]: D) 
     (prins: (A B PS)) 
-    (nw: (MS m1(A,A,B, 
+    (nw: (MS msg1(A,A,B, 
       sample-A(1st(RhoSig)) m* sample-s(2nd(RhoSig)) v+ 
         sample-e(2nd(RhoSig)), 
       1st(RhoSig), sent))) OCs} 
   if RhoSig := G(D) .
 
 --- encaps
-  crl [encap] : {(rd-m: (M, PoL)) (m[B]: P1) (keys[B]: KS)
-    (nw: (m1(C,A,B,T,Rho,sent) MS)) OCs}
+  crl [encaps] : {(rd-m: (M, PoL)) (m[B]: P1) (keys[B]: KS)
+    (nw: (msg1(C,A,B,T,Rho,sent) MS)) OCs}
   => {(rd-m: PoL) (m[B]: M) 
     (keys[B]: (KS key(KDF(1st(Kr), H'(CU,CV)), A)))
-    (nw: (m1(C,A,B,T,Rho,replied) 
-      m2(B,B,A, CU, CV, sent) 
+    (nw: (msg1(C,A,B,T,Rho,replied) 
+      msg2(B,B,A, CU, CV, sent) 
       MS)) OCs} 
   if M' := H(M) /\
     Kr := G(pair(M', H'(T, Rho))) /\
@@ -321,12 +318,12 @@ mod KYBER is
 
 --- decaps
   crl [decaps] : {(d[A]: D) (keys[A]: KS)
-    (nw: (m1(A,A,B,T,Rho,MsgStat) 
-      m2(C,B,A, CU, CV, sent) MS)) OCs}
+    (nw: (msg1(A,A,B,T,Rho,MsgStat) 
+      msg2(C,B,A, CU, CV, sent) MS)) OCs}
   => {(d[A]: D) 
     (keys[A]: (KS key(KDF(1st(Kr2), H'(CU,CV)), B)))
-    (nw: (m1(A,A,B,T,Rho,MsgStat) 
-      m2(C,B,A, CU, CV, replied) MS)) OCs} 
+    (nw: (msg1(A,A,B,T,Rho,MsgStat) 
+      msg2(C,B,A, CU, CV, replied) MS)) OCs} 
   if RhoSig := G(D) /\
     Rho == 1st(RhoSig) /\
     T == sample-A(Rho) m* sample-s(2nd(RhoSig)) v+ sample-e(2nd(RhoSig)) /\
@@ -340,39 +337,46 @@ mod KYBER is
   rl [stutter] : {(rd-d: null) OCs} => {(rd-d: null) OCs} .
 
 ***(
-  * eve intercepts a message m1 sent from alice to bob and
+  * eve intercepts a message msg1 sent from alice to bob and
   * sends a fake message to bob
 )
   rl [build-ds] : {(rd-d: (D, PoL)) (ds: PoC1) OCs}
   => {(rd-d: PoL) (ds: (PoC1 D)) OCs} .
+  rl [build-ms] : {(rd-m: (M, PoL)) (ms: PoC3) OCs}
+  => {(rd-m: PoL) (ms: (PoC3 M)) OCs} .
 
-  crl [attack1] : {(ds: (D PoC1))
-    (nw: (m1(A,A,B, TA, RhoA, sent) MS)) OCs}
+  crl [keygen-eve] : {(ds: (D PoC1))
+    (nw: (msg1(A,A,B, TA, RhoA, sent) MS)) OCs}
   => {(ds: (D PoC1))
-    (nw: (m1(A,A,B, TA, RhoA, intercepted) 
-      m1(eve,A,B, 
+    (nw: (msg1(A,A,B, TA, RhoA, intercepted) 
+      msg1(eve,A,B, 
         sample-A(1st(RhoSig)) m* sample-s(2nd(RhoSig)) v+ 
           sample-e(2nd(RhoSig)), 
         1st(RhoSig), sent) MS)) OCs}
   if RhoSig := G(D) .
 
-  rl [build-ms] : {(rd-m: (M, PoL)) (ms: PoC3) OCs}
-  => {(rd-m: PoL) (ms: (PoC3 M)) OCs} .
-
-  crl [attack2] : {(ds: (D PoC1)) (ms: (M PoC3))
-    (nw: (m1(A,A,B, TA, RhoA, intercepted)
-      m1(eve,A,B, T, Rho, replied)
-      m2(B,B,A, CUB, CVB, sent) MS)) 
+  crl [encaps-eve] : {(ms: (M PoC3))
+    (nw: (msg1(A,A,B, TA, RhoA, intercepted) MS))
     (glean-keys: KS) OCs}
-  => {(ds: (D PoC1)) (ms: (M PoC3))
-    (nw: (m1(A,A,B, TA, RhoA, intercepted)
-      m1(eve,A,B, T, Rho, replied)
-      m2(B,B,A, CUB, CVB, intercepted) 
-      
-      m2(eve,B,A, CU, CV, sent) MS)) 
-    (glean-keys: (KS
-      key(KDF(1st(Kr), H'(CU,CV)), A) 
-      key(KDF(1st(Kr2), H'(CUB, CVB)), B) )) OCs} 
+  => {(ms: (M PoC3))
+    (nw: (msg1(A,A,B, TA, RhoA, intercepted)
+      msg2(eve,B,A, CU, CV, sent) MS)) 
+    (glean-keys: (key(KDF(1st(Kr), H'(CU,CV)), A) KS)) OCs} 
+  if M' := H(M) /\
+    Kr := G(pair(M', H'(TA, RhoA))) /\
+    CU := enc-u(TA, RhoA, M', 2nd(Kr)) /\
+    CV := enc-v(TA, RhoA, M', 2nd(Kr)) /\
+    msg2(eve,B,A, CU, CV, sent) \in MS = false /\
+    msg2(eve,B,A, CU, CV, replied) \in MS = false .
+
+  crl [decaps-eve] : {(ds: (D PoC1))
+    (nw: (msg1(eve,A,B, T, Rho, replied)
+      msg2(B,B,A, CUB, CVB, sent) MS))
+    (glean-keys: KS) OCs}
+  => {(ds: (D PoC1))
+    (nw: (msg1(eve,A,B, T, Rho, replied)
+      msg2(B,B,A, CUB, CVB, intercepted) MS))
+    (glean-keys: (key(KDF(1st(Kr2), H'(CUB, CVB)), B) KS)) OCs} 
   if RhoSig := G(D) /\
     Rho == 1st(RhoSig) /\
     T == sample-A(Rho) m* sample-s(2nd(RhoSig)) v+ sample-e(2nd(RhoSig)) /\
@@ -381,13 +385,12 @@ mod KYBER is
     M2 := compr(VB' p- tpV(sample-s(2nd(RhoSig))) dot UB', 1) /\
     Kr2 := G(pair(M2, H'(T, Rho))) /\
     enc-u(T,Rho,M2,2nd(Kr2)) == CUB /\
-    enc-v(T,Rho,M2,2nd(Kr2)) == CVB /\
-
-    M' := H(M) /\
-    Kr := G(pair(M', H'(TA, RhoA))) /\
-    CU := enc-u(TA, RhoA, M', 2nd(Kr)) /\
-    CV := enc-v(TA, RhoA, M', 2nd(Kr)) .
+    enc-v(T,Rho,M2,2nd(Kr2)) == CVB .
 endm
+
+search [1] in KYBER : 
+  init =>! {(prins: (alice bob eve)) OCs} . 
+eof
 
 search [1] in KYBER : 
   init =>* {(keys[alice]: key(K1,bob)) (keys[bob]: key(K2,alice)) 
