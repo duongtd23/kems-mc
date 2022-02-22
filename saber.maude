@@ -8,10 +8,10 @@ fmod POLYNOMIAL is
   sort Poly .
   subsort Int < Poly .
 
-  op _p+_ : Poly Poly -> Poly [ctor assoc comm prec 33 gather (E e)] . --- should not use id: 0
-  op _p*_ : Poly Poly -> Poly [ctor assoc comm prec 31 gather (E e)] . --- should not use id: 1
-  op _md_ : Poly Int -> Poly [ctor prec 32] . --- polynomial mod p
-  op _p-_ : Poly Poly -> Poly [prec 33 gather (E e)] .
+  op _p+_ : Poly Poly -> Poly [ctor assoc comm prec 33] .
+  op _p*_ : Poly Poly -> Poly [ctor assoc comm prec 31] .
+  op _md_ : Poly Int -> Poly [ctor prec 32] .
+  op _p-_ : Poly Poly -> Poly [prec 33] .
   op neg_ : Poly -> Poly [ctor] .
 
   vars P0 P1 P2 P3 : Poly .
@@ -25,16 +25,7 @@ fmod POLYNOMIAL is
 
 --- poly
   eq (K p* P1) md K = 0 .
-  eq (P1 md K) md K = P1 md K .
   eq (P1 p+ (P2 md K)) md K = (P1 p+ P2) md K .
-  eq (P1 p* (P2 md K)) md K = (P1 p* P2) md K .
-  eq (P1 p+ K p* P2) md K = P1 md K .
-
-  --- addition
-  --- eq (P1 md K) md K = P1 md K .
-  eq ((P1 md K) p+ P2) md K = (P1 p+ P2) md K .
-  eq 0 md K = 0 .
-  eq 1 md K = 1 .
 
 ---subtraction
   eq P1 p- P2 = P1 p+ neg(P2) .
@@ -47,6 +38,7 @@ fmod POLYNOMIAL is
 --- shift right
   op shiftR : Poly Int -> Poly .
 
+--- borrow from maude
   op _^_ : Int Int -> Int [prec 29 gather (E e) special (
     id-hook NumberOpSymbol (^)
     op-hook succSymbol (s_ : Nat ~> NzNat)
@@ -179,10 +171,10 @@ fmod MESSAGE is
   sort Msg .
 
 --- seed_A and b
-  op m1 : Prin Prin Prin PVPair MsgState -> Msg [ctor] .
+  op msg1 : Prin Prin Prin PVPair MsgState -> Msg [ctor] .
 
 --- c_m and b'
-  op m2 : Prin Prin Prin PVPair MsgState -> Msg [ctor] .
+  op msg2 : Prin Prin Prin PVPair MsgState -> Msg [ctor] .
 endfm
 
 fmod KEY is 
@@ -260,8 +252,6 @@ fmod OCOMP is
   op (rd-m:_) : ListPoly -> OComp [ctor] .
 
 --- eve 
-  op (glean-m1:_) : ColMsg -> OComp [ctor] .
-  op (glean-m2:_) : ColMsg -> OComp [ctor] . 
   op (seeds:_) : ColPoly -> OComp [ctor] .
   op (rs:_) : ColPoly -> OComp [ctor] .
   op (ms:_) : ColPoly -> OComp [ctor] .
@@ -294,7 +284,7 @@ fmod CONFIG is
     (rd-seed: (seed1 , seed2)) (rd-r: (r1 , r2)) (rd-m: (m1 , m2)) 
     (key[alice]: nil) (key[bob]: nil) (keys: empty)
     (seed[alice]: 0) (seed[bob]: 0) (r[alice]: 0) (r[bob]: 0)
-    (m[alice]: 0) (m[bob]: 0) (glean-m1: empty) (glean-m2: empty)
+    (m[alice]: 0) (m[bob]: 0)
     (seeds: empty) (rs: empty) (ms: empty)} .
 
 --- some approximation
@@ -344,7 +334,7 @@ mod SABER is
     S' := gen-s(R) /\
     VB' := shiftRV((MA m* S' v+ h) mdv q, esq - esp) /\
     V' := tpV(VB) dot S' /\
-    CM := shiftR( (V' p+ h1 p- (2 ^ (esp - 1)) p* M) md p, esp - esT) .
+    CM := shiftR( ((V' p+ h1) p- (2 ^ (esp - 1)) p* M) md p, esp - esT) .
 
 --- keygen
   crl [keygen] : {(rd-seed: (SD, PoL)) (rd-r: (R, PoL2)) 
@@ -352,35 +342,35 @@ mod SABER is
     (prins: (A ; B ; PS)) (nw: MS) OCs}
   => {(rd-seed: PoL) (rd-r: PoL2) (seed[A]: SD) (r[A]: R) 
     (prins: (A ; B ; PS)) 
-    (nw: (MS ; m1(A,A,B, pvPair(SD, VB), sent))) OCs} 
+    (nw: (MS ; msg1(A,A,B, pvPair(SD, VB), sent))) OCs} 
   if MA := gen-A(SD) /\
     S := gen-s(R) /\
     VB := shiftRV((tp(MA) m* S v+ h) mdv q, esq - esp) .
 
 --- encap
   crl [encap] : {(rd-m: (M, PoL)) (m[B]: Po1) (key[B]: KE1)
-    (nw: (m1(C,A,B, pvPair(SD,VB), sent) ; MS)) OCs}
+    (nw: (msg1(C,A,B, pvPair(SD,VB), sent) ; MS)) OCs}
   => {(rd-m: PoL) (m[B]: M) 
     (key[B]: key( H(1st(Kr), CB) , A))
-    (nw: (m1(C,A,B, pvPair(SD, VB), replied) ; 
-      m2(B,B,A, CB, sent) ;
+    (nw: (msg1(C,A,B, pvPair(SD, VB), replied) ; 
+      msg2(B,B,A, CB, sent) ;
       MS)) OCs} 
   if Kr := G(F(pvPair(SD,VB)), M) /\
     CB := enc(SD,VB,M,2nd(Kr)) .
 
 --- decap
   crl [decap] : {(seed[A]: SD) (r[A]: R)  (key[A]: KE1)
-    (nw: (m1(A,A,B, pvPair(SD,VB), MsgStat) ; 
-      m2(C,B,A, pvPair(CM,VB'), sent) ; MS)) OCs}
+    (nw: (msg1(A,A,B, pvPair(SD,VB), MsgStat) ; 
+      msg2(C,B,A, pvPair(CM,VB'), sent) ; MS)) OCs}
   => {(seed[A]: SD) (r[A]: R) 
     (key[A]: key( H(1st(Kr'),CB') , B))
-    (nw: (m1(A,A,B, pvPair(SD,VB), MsgStat) ;
-      m2(C,B,A, pvPair(CM,VB'), replied) ; MS)) OCs} 
+    (nw: (msg1(A,A,B, pvPair(SD,VB), MsgStat) ;
+      msg2(C,B,A, pvPair(CM,VB'), replied) ; MS)) OCs} 
   if MA := gen-A(SD) /\
     S := gen-s(R) /\
     VB == shiftRV((tp(MA) m* S v+ h) mdv q, esq - esp) /\
     V := tpV(VB') dot S /\
-    M' := shiftR((V p+ h2 p- 2 ^ (esp - esT) p* CM) md p, esp - 1) /\
+    M' := shiftR(((V p+ h2) p- 2 ^ (esp - esT) p* CM) md p, esp - 1) /\
     Kr' := G(F(pvPair(SD,VB)), M') /\
     CB' := enc(SD,VB,M',2nd(Kr')) /\
     CB' == pvPair(CM,VB') .
@@ -388,52 +378,52 @@ mod SABER is
   rl [stutter] : {(rd-seed: null) OCs} => {(rd-seed: null) OCs} .
 
 ***(
-  * eve intercepts a message m1 sent from alice to bob and
+  * eve intercepts a message msg1 sent from alice to bob and
   * sends a fake message to bob
 )
   rl [build-seed] : {(rd-seed: (SD, PoL)) (rd-r: (R, PoL2))
     (seeds: PoC1) (rs: PoC2) OCs}
   => {(rd-seed: PoL) (rd-r: PoL2) 
     (seeds: (SD ; PoC1)) (rs: (R ; PoC2)) OCs} .
+  rl [build-ms] : {(rd-m: (M, PoL)) (ms: PoC1) OCs}
+  => {(rd-m: PoL) (ms: (M ; PoC1)) OCs} .
 
-  crl [attack1] : {(seeds: (SD ; PoC1)) (rs: (R ; PoC2))
-    (nw: (m1(A,A,B, pvPair(SD-A,VB-A), sent) ; MS)) OCs}
+  crl [keygen-eve] : {(seeds: (SD ; PoC1)) (rs: (R ; PoC2))
+    (nw: (msg1(A,A,B, pvPair(SD-A,VB-A), sent) ; MS)) OCs}
   => {(seeds: (SD ; PoC1)) (rs: (R ; PoC2))
-    (nw: (m1(A,A,B, pvPair(SD-A,VB-A), intercepted) ;
-      m1(eve,A,B, pvPair(SD, VB), sent) ; MS)) OCs}
+    (nw: (msg1(A,A,B, pvPair(SD-A,VB-A), intercepted) ;
+      msg1(eve,A,B, pvPair(SD, VB), sent) ; MS)) OCs}
   if MA := gen-A(SD) /\
     S := gen-s(R) /\
     VB := shiftRV((tp(MA) m* S v+ h) mdv q, esq - esp) .
 
-  rl [build-ms] : {(rd-m: (M, PoL)) (ms: PoC1) OCs}
-  => {(rd-m: PoL) (ms: (M ; PoC1)) OCs} .
+  crl [encaps-eve] : {(ms: (M ; PoC3))
+    (nw: (msg1(A,A,B, pvPair(SD-A,VB-A), intercepted) ; MS)) 
+    (keys: KS) OCs}
+  => {(ms: (M ; PoC3))
+    (nw: (msg1(A,A,B, pvPair(SD-A,VB-A), intercepted) ;
+      msg2(eve,B,A, CB, sent) ; MS)) 
+    (keys: (KS ; key(H(1st(Kr), CB), A)) ) OCs} 
+  if Kr := G(F(pvPair(SD-A,VB-A)), M) /\
+    CB := enc(SD-A,VB-A,M,2nd(Kr)) .
 
-  crl [attack2] : {(seeds: (SD ; PoC1)) (rs: (R ; PoC2)) 
+  crl [decaps-eve] : {(seeds: (SD ; PoC1)) (rs: (R ; PoC2)) 
     (ms: (M ; PoC3))
-    (nw: (m1(A,A,B, pvPair(SD-A,VB-A), intercepted) ;
-      m1(eve,A,B, pvPair(SD,VB), replied) ;
-      m2(B,B,A, pvPair(CM-B,VB'-B), sent) ; MS)) 
+    (nw: (msg1(eve,A,B, pvPair(SD,VB), replied) ;
+      msg2(B,B,A, pvPair(CM-B,VB'-B), sent) ; MS)) 
     (keys: KS) OCs}
   => {(seeds: (SD ; PoC1)) (rs: (R ; PoC2)) (ms: (M ; PoC3))
-    (nw: (m1(A,A,B, pvPair(SD-A,VB-A), intercepted) ;
-      m1(eve,A,B, pvPair(SD,VB), replied) ;
-      m2(B,B,A, pvPair(CM-B,VB'-B), intercepted) ;
-      m2(eve,B,A, CB, sent) ; MS)) 
-    (keys: (KS ;
-      key( H(1st(Kr), CB), A) ;
-      key( H(1st(Kr'),CB'), B) )) OCs} 
+    (nw: (msg1(eve,A,B, pvPair(SD,VB), replied) ;
+      msg2(B,B,A, pvPair(CM-B,VB'-B), intercepted) ; MS)) 
+    (keys: (KS ; key(H(1st(Kr'),CB'), B)) ) OCs} 
   if MA := gen-A(SD) /\
     S := gen-s(R) /\
     VB == shiftRV((tp(MA) m* S v+ h) mdv q, esq - esp) /\
     V := tpV(VB'-B) dot S /\
-    M' := shiftR((V p+ h2 p- 2 ^ (esp - esT) p* CM-B) md p, esp - 1) /\
+    M' := shiftR(((V p+ h2) p- 2 ^ (esp - esT) p* CM-B) md p, esp - 1) /\
     Kr' := G(F(pvPair(SD,VB)), M') /\
     CB' := enc(SD,VB,M',2nd(Kr')) /\
-    CB' == pvPair(CM-B,VB'-B) /\ --- do not need to check
-
-    Kr := G(F(pvPair(SD-A,VB-A)), M) /\
-    CB := enc(SD-A,VB-A,M,2nd(Kr)) .
-
+    CB' == pvPair(CM-B,VB'-B) .
 endm
 
 search [1] in SABER : 
