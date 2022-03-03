@@ -435,6 +435,5 @@ search [1] in SABER :
     (glean-keys: (key(K1,alice) ; key(K2,bob) ; KS)) OCs} .
 eof
 
-search [1] in SABER : 
-  init =>! {(prins: (alice ; bob ; eve)) OCs} . 
+search in SABER : init =>* {OCs} . 
 eof

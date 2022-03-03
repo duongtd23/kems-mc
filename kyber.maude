@@ -389,14 +389,9 @@ mod KYBER is
 endm
 
 search [1] in KYBER : 
-  init =>! {(prins: (alice bob eve)) OCs} . 
-eof
-
-search [1] in KYBER : 
   init =>* {(keys[alice]: key(K1,bob)) (keys[bob]: key(K2,alice)) 
     (glean-keys: (key(K1,alice) key(K2,bob) KS)) OCs} .
 eof
 
-search [1] in KYBER : 
-  init =>* {(keys[alice]: key(K1,bob)) (keys[bob]: key(K1,alice)) OCs} . 
+search in KYBER : init =>* {OCs} . 
 eof

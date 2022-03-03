@@ -342,7 +342,5 @@ search [1] in MLWR :
   such that equal(K1, K1') and equal(K2, K2') .
 eof
 
-search [1] in MLWR : 
-  init =>* {(key[alice]: key(K1,bob)) (key[bob]: key(K2,alice)) OCs} 
-  such that equal(K1, K2) .
+search in MLWR : init =>* {OCs} .
 eof
